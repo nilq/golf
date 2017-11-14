@@ -10,8 +10,6 @@ pub enum TokenType {
     Symbol,
     Operator,
     Identifier,
-    Type,
-    Keyword,
     Whitespace,
     Indent,
     EOL,
