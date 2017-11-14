@@ -24,10 +24,10 @@ pub fn lexer(data: &mut Chars) -> Lexer {
         "!",
         "|",
         "=",
-        ".",
     ].iter().map(|&x| x.to_string()).collect();
 
     let operators = vec![
+        "++",
         "+",
         "-",
         "*",
@@ -41,6 +41,7 @@ pub fn lexer(data: &mut Chars) -> Lexer {
         "<=",
         "==",
         "!=",
+        ".",
     ].iter().map(|&x| x.to_string()).collect();
 
     let indent = vec![

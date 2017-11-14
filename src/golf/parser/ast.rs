@@ -5,7 +5,7 @@ use super::*;
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expression {
     Block(Vec<Statement>),
-    Number(i64),
+    Number(f64),
     Bool(bool),
     Str(Rc<String>),
     Char(char),
@@ -15,7 +15,6 @@ pub enum Expression {
     Index(Index),
     Function(Function),
     Arm(Arm),
-    Print(Rc<Expression>),
     EOF,
 }
 
@@ -74,6 +73,7 @@ pub enum Operand {
     Add, Sub,
     Equal, NEqual,
     Lt, Gt, LtEqual, GtEqual,
+    Combine,
 }
 
 impl Operand {
@@ -91,6 +91,7 @@ impl Operand {
             ">"   => Some((Operand::Gt, 4)),
             "<="  => Some((Operand::LtEqual, 4)),
             ">="  => Some((Operand::GtEqual, 4)),
+            "."   => Some((Operand::Combine, 5)),
             _     => None,
         }
     }
