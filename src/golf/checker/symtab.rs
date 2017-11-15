@@ -57,19 +57,6 @@ impl SymTab {
         }
     }
 
-    pub fn visualize(&self, env_index: usize) {
-        if env_index > 0 {
-            if let Some(ref p) = self.parent {
-                p.visualize(env_index - 1);
-                println!("------------------------------");
-            }
-        }
-
-        for (i, v) in self.names.borrow().iter().enumerate() {
-            println!("({} : {}) = {:?}", i, env_index, v)
-        }
-    }
-
     fn dump(&self, f: &mut fmt::Formatter, env_index: usize) -> fmt::Result {
         if env_index > 0 {
             if let Some(ref p) = self.parent {

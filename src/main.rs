@@ -7,16 +7,21 @@ use golf::*;
 fn main() {
     let test = r#"
 fib = {
-  |0| 0
-  |1| 1
-  |n| (fib n - 1) + fib n - 2
+    |0| 0
+
+    a = 10
+
+    |1| 1
+    |n| (fib n - 1) + fib n - 2
 }
 
 twice = {
-  |n| 2 * n
+    |n| 2 * n
 }
 
-a = (twice . fib) 10
+twice_fib = twice . fib
+
+a = twice_fib 10
     "#;
 
     let lexer = lexer(&mut test.chars());
@@ -73,7 +78,7 @@ a = (twice . fib) 10
             println!("{:#?}", stuff);
 
             let mut symtab = SymTab::new_global();
-            let checker    = Checker::new(stuff);
+            let checker    = Checker::new(stuff.clone());
 
             match checker.check(&mut symtab) {
                 Err(err) => match err {
@@ -121,7 +126,14 @@ a = (twice . fib) 10
                         }
                     },
                 },
-                _ => println!("{}", "checked".green()),
+
+                _ => {
+                    let transpiler = Transpiler::new(stuff.clone());
+                    match transpiler.lua() {
+                        Err(err) => println!("{}", format!("{}", err).red()),
+                        Ok(lua)  => println!("{}", lua),   
+                    }
+                }
             }
         }
     }

@@ -13,13 +13,6 @@ pub struct CheckError {
 }
 
 impl CheckError {
-    pub fn new(value: &str) -> CheckError {
-        CheckError {
-            value:    CheckErrorValue::Constant(value.to_owned()),
-            position: None,
-        }
-    }
-    
     pub fn new_pos(value: &str, position: TokenPosition) -> CheckError {
         CheckError {
             value:    CheckErrorValue::Constant(value.to_owned()),

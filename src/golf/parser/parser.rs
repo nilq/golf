@@ -75,51 +75,6 @@ impl Parser {
         }
     }
 
-    fn block(&mut self) -> ParserResult<Expression> {
-        let mut stack = Vec::new();
-        loop {
-            if self.traveler.current().token_type == TokenType::Indent {
-                self.traveler.next();
-                if self.traveler.current_content() == "\n" {
-                    self.traveler.next();
-                    break
-                }
-            } else if self.traveler.current_content() == "\n" {
-                stack.push(self.traveler.current().clone());
-                self.traveler.next();
-
-                if self.traveler.current().token_type == TokenType::Indent {
-                    self.traveler.next();
-                } else {
-                    break
-                }
-            }
-
-            if self.traveler.remaining() < 2 {
-                break
-            }
-
-            stack.push(self.traveler.current().clone());
-            self.traveler.next();
-        }
-    
-        let mut parser = Parser::new(Traveler::new(stack));
-
-        match parser.parse() {
-            Ok(s)    => Ok(Expression::Block(s)),
-            Err(why) => Err(ParserError::new(&format!("{}", why))),
-        }
-    }
-
-    fn body(&mut self) -> ParserResult<Expression> {
-        if self.traveler.current_content() == "\n" {
-            self.traveler.next();
-            self.block()
-        } else {
-            self.expression()
-        }
-    }
-
     fn index(&mut self, id: Rc<Expression>) -> ParserResult<Expression> {
         self.traveler.next();
 
@@ -173,16 +128,19 @@ impl Parser {
         
         while self.traveler.current_content() != "}" {            
             if self.traveler.current_content() == "|" {
-                arms.push(Rc::new(self.arm()?))
+                arms.push(Statement::Expression(Rc::new(self.arm()?)))
             } else {
-                arms.push(Rc::new(self.expression()?));
+                self.skip_whitespace()?;
+                if self.traveler.current_content() != "}" {
+                    arms.push(self.statement()?);
+                }
             }
         }
 
         self.traveler.expect_content("}")?;
         self.traveler.next();
 
-        Ok(Expression::Function(Function{arms, position: self.traveler.current().position}))
+        Ok(Expression::Function(Function{arms: Rc::new(Expression::Block(arms)), position: self.traveler.current().position}))
     }
 
     pub fn term(&mut self) -> ParserResult<Expression> {

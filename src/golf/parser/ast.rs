@@ -42,14 +42,14 @@ pub struct Index {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Function {
-    pub arms: Vec<Rc<Expression>>,
+    pub arms:     Rc<Expression>,
     pub position: TokenPosition,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Arm {
-    pub params: Vec<Rc<Expression>>,
-    pub body:   Rc<Expression>,
+    pub params:   Vec<Rc<Expression>>,
+    pub body:     Rc<Expression>,
     pub position: TokenPosition,
 }
 
@@ -73,7 +73,7 @@ pub enum Operand {
     Add, Sub,
     Equal, NEqual,
     Lt, Gt, LtEqual, GtEqual,
-    Combine,
+    Concat, Combine,
 }
 
 impl Operand {
@@ -92,7 +92,27 @@ impl Operand {
             "<="  => Some((Operand::LtEqual, 4)),
             ">="  => Some((Operand::GtEqual, 4)),
             "."   => Some((Operand::Combine, 5)),
+            "++"  => Some((Operand::Concat, 5)),
             _     => None,
+        }
+    }
+    
+    pub fn to_string(&self) -> String {
+        match *self {
+            Operand::Pow     => "^".to_string(),
+            Operand::Mul     => "*".to_string(),
+            Operand::Div     => "/".to_string(),
+            Operand::Mod     => "%".to_string(),
+            Operand::Add     => "+".to_string(),
+            Operand::Sub     => "-".to_string(),
+            Operand::Equal   => "==".to_string(),
+            Operand::NEqual  => "!=".to_string(),
+            Operand::Lt      => "<".to_string(),
+            Operand::Gt      => ">".to_string(),
+            Operand::LtEqual => "<=".to_string(),
+            Operand::GtEqual => ">=".to_string(),
+            Operand::Combine => "..".to_string(),
+            _                => unreachable!(),
         }
     }
 }

@@ -1,5 +1,14 @@
 fib = {
-  |0| 0
-  |1| 1
-  |n| (fib n - 1) + fib n - 2
+    |0| 0
+    a = 10
+    |1| 1
+    |n| (fib n - 1) + fib n - 2
 }
+
+twice = {
+    |n| 2 * n
+}
+
+twice_fib = twice . fib
+
+a = twice_fib 10
