@@ -13,7 +13,7 @@ end
 
 if 1 == #__args then
 local n = __args[1]
-return (fib)(((n-1)+(fib)((n-2))))
+return ((fib)((n-1))+(fib)((n-2)))
 end
 
 end
