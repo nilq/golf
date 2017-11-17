@@ -6,8 +6,8 @@ use std::fmt;
 
 #[derive(Clone)]
 pub struct SymTab {
-    parent: Option<Rc<SymTab>>,
-    names:  RefCell<HashMap<String, usize>>,
+    pub parent: Option<Rc<SymTab>>,
+    pub names:  RefCell<HashMap<String, usize>>,
 }
 
 impl SymTab {

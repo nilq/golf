@@ -22,40 +22,88 @@ impl Transpiler {
 
         Ok(Rc::new(result))
     }
-    
+
     pub fn lua_statement(&self, statement: &Statement) -> TranspileResult<Rc<String>> {
         match *statement {
             Statement::Expression(ref expression) => self.lua_expression(&expression),
             Statement::Assignment(ref assignment) => {
-                let result = format!("local {}={}\n", self.lua_expression(&assignment.left)?, self.lua_expression(&assignment.right)?);
-                Ok(Rc::new(result))
+                match *assignment.left {
+                    Expression::Identifier(ref id, ref pos) => {
+                        let id = match id.as_str() {
+                            "while"  |
+                            "if"     |
+                            "else"   |
+                            "elseif" |
+                            "do"     |
+                            "local"  |
+                            "end"    |
+                            "for"    |
+                            "then" => format!("_{}", id),
+                            _      => format!("{}", id),
+                        };
+
+                        let left = Expression::Identifier(Rc::new(id), *pos);
+
+                        let result = format!("local {}={}\n", self.lua_expression(&left)?, self.lua_expression(&assignment.right)?);
+                        Ok(Rc::new(result))
+                    },
+
+                    _ => {
+                        let result = format!("local {}={}\n", self.lua_expression(&assignment.left)?, self.lua_expression(&assignment.right)?);
+                        Ok(Rc::new(result))
+                    },
+                }
             },
         }
     }
-    
+
     pub fn lua_expression(&self, expression: &Expression) -> TranspileResult<Rc<String>> {
         match *expression {
             Expression::Number(ref n)        => Ok(Rc::new(format!("{}", n))),
             Expression::Str(ref n)           => Ok(Rc::new(format!("\"{}\"", n))),
             Expression::Bool(ref n)          => Ok(Rc::new(format!("{}", n))),
             Expression::Char(ref n)          => Ok(Rc::new(format!("\"{}\"", n))),
-            Expression::Identifier(ref n, _) => Ok(Rc::new(format!("{}", n))),
+            Expression::Identifier(ref n, _) => {
+                match n.as_str() {
+                    "while"  |
+                    "if"     |
+                    "else"   |
+                    "elseif" |
+                    "do"     |
+                    "local"  |
+                    "end"    |
+                    "for"    |
+                    "self"   |
+                    "then" => Ok(Rc::new(format!("_{}", n))),
+                    _      => Ok(Rc::new(format!("{}", n))),
+                }
+            },
 
             Expression::Operation(ref operation) => {
                 let left  = self.lua_expression(&operation.left)?;
                 let right = self.lua_expression(&operation.right)?;
 
                 match operation.op {
-                    Operand::Combine => Ok(Rc::new(format!("function(__a) return {}({}(__a)) end\n", left, right))),
-                    _ => Ok(Rc::new(format!("({}{}{})", left, operation.op.to_string(), right))),
+                    Operand::Combine   => Ok(Rc::new(format!("function(__a) return {}({}(__a)) end\n", left, right))),
+                    Operand::PipeLeft  => Ok(Rc::new(format!("{}({})\n", left, right))),
+                    Operand::PipeRight => Ok(Rc::new(format!("{}({})\n", right, left))),
+                    _                  => Ok(Rc::new(format!("({}{}{})", left, operation.op.to_string(), right))),
                 }
             },
-            
+
             Expression::Call(ref call) => {
                 let mut result = format!("({})(", self.lua_expression(&call.callee)?);
+                
+                let mut acc = 1;
 
                 for arg in &call.args {
-                    result.push_str(&*self.lua_expression(&arg)?)
+                    result.push_str(&*self.lua_expression(&arg)?);
+
+                    if acc != call.args.len() {
+                        result.push(',')
+                    }
+                    
+                    acc += 1
                 }
 
                 result.push(')');
@@ -121,15 +169,18 @@ impl Transpiler {
                             flag = false;
 
                             result.push_str(&format!("if {} == __args[{}] then\n", self.lua_expression(c)?, acc));
-                        
+                            
                             match *arm.body {
-                                Expression::Block(_) => (),
-                                _ => result.push_str("return "),
+                                Statement::Expression(ref expression) => match **expression {
+                                    Expression::Block(_) => (),
+                                    _ => result.push_str("return "),
+                                },
+                                _ => (),
                             }
-                            
-                            result.push_str(&format!("{}\n", self.lua_expression(&arm.body)?));
+
+                            result.push_str(&format!("{}\n", self.lua_statement(&arm.body)?));
                             result.push_str("end\n");
-                            
+
                             continue
                         },
 
@@ -138,13 +189,16 @@ impl Transpiler {
                     
                     acc += 1;
                 }
-                
+
                 if flag {
-                    result.push_str(&format!("return {}\n", self.lua_expression(&arm.body)?))
+                    match *arm.body {
+                        Statement::Expression(ref e) => result.push_str(&format!("return {}\n", self.lua_expression(&e)?)),
+                        _                            => (),
+                    }
                 }
-                
+
                 result.push_str("end\n");
-                
+
                 Ok(Rc::new(result))
             }
 

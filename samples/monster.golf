@@ -1,0 +1,8 @@
+new_monster = {
+  |hitpoints| {
+    self = {
+      |"hurt" damage| hitpoints = hitpoints - damage
+      |"die"|         self "hurt" hitpoints
+    }
+  }
+}

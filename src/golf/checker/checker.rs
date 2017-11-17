@@ -31,7 +31,9 @@ impl Checker {
             },
 
             Expression::Identifier(ref id, ref position) => match sym.get_name(&*id) {
-                None    => Err(CheckError::new_pos("undeclared use", position.clone())),
+                None    => {
+                    Err(CheckError::new_pos("undeclared use", position.clone()))
+                },
                 Some(_) => Ok(())
             },
 
@@ -43,11 +45,11 @@ impl Checker {
             Expression::Function(ref function)   => {
                 match *function.arms {
                     Expression::Block(ref content) => for arm in content.iter() {
-                        let mut param_names = Vec::new();
-
                         match *arm {
                             Statement::Expression(ref expression) => match **expression {
                                 Expression::Arm(ref arm) => {
+                                    let mut param_names = Vec::new();
+
                                     for p in &arm.params {
                                         match **p {
                                             Expression::Identifier(ref i, _) => param_names.push(i.clone()),
@@ -57,13 +59,13 @@ impl Checker {
 
                                     let mut local_sym = SymTab::new(Rc::new(sym.clone()), param_names.as_slice());
 
-                                    self.check_expression(&mut local_sym, &arm.body)?;
+                                    self.check_statement(&mut local_sym, &arm.body)?;
                                 },
 
-                                ref e => self.check_expression(sym, &e)?,
+                                _ => (),
                             },
 
-                            ref s => self.check_statement(sym, &s)?
+                            ref s => self.check_statement(sym, &s)?,
                         }
                     },
                     

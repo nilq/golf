@@ -49,7 +49,7 @@ pub struct Function {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Arm {
     pub params:   Vec<Rc<Expression>>,
-    pub body:     Rc<Expression>,
+    pub body:     Rc<Statement>,
     pub position: TokenPosition,
 }
 
@@ -74,6 +74,7 @@ pub enum Operand {
     Equal, NEqual,
     Lt, Gt, LtEqual, GtEqual,
     Concat, Combine,
+    PipeLeft, PipeRight,
 }
 
 impl Operand {
@@ -86,13 +87,15 @@ impl Operand {
             "+"   => Some((Operand::Add, 2)),
             "-"   => Some((Operand::Sub, 2)),
             "=="  => Some((Operand::Equal, 3)),
-            "!="  => Some((Operand::NEqual, 3)),
+            "~="  => Some((Operand::NEqual, 3)),
             "<"   => Some((Operand::Lt, 4)),
             ">"   => Some((Operand::Gt, 4)),
             "<="  => Some((Operand::LtEqual, 4)),
             ">="  => Some((Operand::GtEqual, 4)),
             "."   => Some((Operand::Combine, 5)),
             "++"  => Some((Operand::Concat, 5)),
+            "<|"  => Some((Operand::PipeLeft, 5)),
+            "|>"  => Some((Operand::PipeRight, 5)),
             _     => None,
         }
     }
@@ -106,7 +109,7 @@ impl Operand {
             Operand::Add     => "+".to_string(),
             Operand::Sub     => "-".to_string(),
             Operand::Equal   => "==".to_string(),
-            Operand::NEqual  => "!=".to_string(),
+            Operand::NEqual  => "~=".to_string(),
             Operand::Lt      => "<".to_string(),
             Operand::Gt      => ">".to_string(),
             Operand::LtEqual => "<=".to_string(),

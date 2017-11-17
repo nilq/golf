@@ -1,0 +1,15 @@
+print = 1
+
+if = {
+  |true body| body!
+}
+
+range = {
+  |a b body|
+    if (a < b) {
+      body!
+      range (a + 1) b body
+    }
+}
+
+range 1 10 {print "yoyo"}

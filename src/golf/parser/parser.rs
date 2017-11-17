@@ -57,7 +57,7 @@ impl Parser {
 
         Ok(expr)
     }
-    
+
     fn try_call(&mut self, callee: Expression) -> ParserResult<Expression> {
         match self.traveler.current().token_type {
             TokenType::IntLiteral    |
@@ -93,39 +93,74 @@ impl Parser {
             )
         )
     }
-    
+
     fn arm(&mut self) -> ParserResult<Expression> {
         self.traveler.expect_content("|")?;
         self.traveler.next();
-        
-        let mut params = Vec::new();
-        
-        while self.traveler.current_content() != "|" {
-            params.push(Rc::new(self.expression()?));
 
-            if self.traveler.current_content() != "|" {
-                self.traveler.expect_content(",")?;
-                self.traveler.next();
-            }
+        let mut params = Vec::new();
+
+        while self.traveler.current_content() != "|" {
+            let a = match self.traveler.current().token_type {
+                TokenType::IntLiteral    => {
+                    let a = Expression::Number(self.traveler.current_content().parse::<f64>().unwrap());
+                    self.traveler.next();
+                    a
+                }
+
+                TokenType::FloatLiteral  => {
+                    let a = Expression::Number(self.traveler.current_content().parse::<f64>().unwrap());
+                    self.traveler.next();
+                    a
+                }
+
+                TokenType::BoolLiteral   => {
+                    let a = Expression::Bool(self.traveler.current_content() == "true");
+                    self.traveler.next();
+                    a
+                }
+
+                TokenType::StringLiteral => {
+                    let a = Expression::Str(Rc::new(self.traveler.current_content().clone()));
+                    self.traveler.next();
+                    a
+                }
+
+                TokenType::CharLiteral => {
+                    let a = Expression::Char(self.traveler.current_content().clone().remove(0));
+                    self.traveler.next();
+                    a
+                }
+
+                TokenType::Identifier => {
+                    let a = Expression::Identifier(Rc::new(self.traveler.current_content().clone()), self.traveler.current().position);
+                    self.traveler.next();
+                    a
+                },
+
+                _ => continue,
+            };
+
+            params.push(Rc::new(a));
         }
 
         self.traveler.expect_content("|")?;
         self.traveler.next();
 
-        let body = Rc::new(self.expression()?);
-        
+        let body = Rc::new(self.statement()?);
+
         self.skip_whitespace()?;
-        
+
         Ok(Expression::Arm(Arm {params, body, position: self.traveler.current().position}))
     }
-    
+
     fn function(&mut self) -> ParserResult<Expression> {
         self.traveler.next();
 
         self.skip_whitespace()?;
 
         let mut arms = Vec::new();
-        
+
         while self.traveler.current_content() != "}" {            
             if self.traveler.current_content() == "|" {
                 arms.push(Statement::Expression(Rc::new(self.arm()?)))
@@ -187,6 +222,10 @@ impl Parser {
                     match self.traveler.current_content().as_str() {
                         "," | ")" => Ok(a),
                         "["       => self.index(Rc::new(a)),
+                        "!"       => {
+                            self.traveler.next();
+                            Ok(Expression::Call(Call {callee: Rc::new(a), args: vec!(), position: self.traveler.current().position}))
+                        },
                         _         => self.try_call(a),
                     }
                 } else {
@@ -213,7 +252,9 @@ impl Parser {
                     }
                 }
                 "{" => self.function(),
-                _ => Err(ParserError::new_pos(self.traveler.current().position, &format!("unexpected symbol: {}", self.traveler.current_content()))),
+                _ =>{
+                    Err(ParserError::new_pos(self.traveler.current().position, &format!("unexpected symbol: {}", self.traveler.current_content())))
+                }
             },
 
             _ => Err(ParserError::new_pos(self.traveler.current().position, &format!("unexpected: {}", self.traveler.current_content()))),
