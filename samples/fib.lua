@@ -13,11 +13,9 @@ end
 
 if 1 == #__args then
 local n = __args[1]
-return (fib)()
+return (fib)(((n-1)+(fib)((n-2))))
 end
 
-((n-1)+(fib)())
-return (n-2)
 end
 
 local twice=function(...) local __args = {...}
@@ -30,5 +28,4 @@ end
 
 local twice_fib=function(__a) return twice(fib(__a)) end
 
-local a=(twice_fib)()
-10
+local a=(twice_fib)(10)

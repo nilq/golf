@@ -14,21 +14,16 @@ if 3 == #__args then
 local a = __args[1]
 local b = __args[2]
 local body = __args[3]
-return (_if)()
+return (_if)((a<b))
 end
 
-(a<b)
 return function(...) local __args = {...}
 (body)()
-(range)()
-((a+1))()
-(b)()
-return body
+return (range)(((a+1))((b)(body)))
 end
 
 end
 
-(range)()110function(...) local __args = {...}
-(print)()
-return "yoyo"
+(range)(1)10function(...) local __args = {...}
+return (print)("yoyo")
 end

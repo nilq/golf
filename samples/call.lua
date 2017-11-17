@@ -1,3 +1,4 @@
-local print=1
+local print=function(...) local __args = {...}
+end
+
 print("yo world")
-("yo world")

@@ -6,10 +6,10 @@ if = {
 
 range = {
   |a b body|
-    if (a < b) {
+    if (a < b), {
       body!
-      range (a + 1) b body
+      range (a + 1), b, body
     }
 }
 
-range 1 10 {print "yoyo"}
+range 1, 10, {print "yoyo"}

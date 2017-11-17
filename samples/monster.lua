@@ -13,11 +13,10 @@ end
 
 if 1 == #__args then
 if "die" == __args[1] then
-return (_self)()
+return (_self)("hurt")
 end
 end
 
-"hurt"
 return hitpoints
 end
 
