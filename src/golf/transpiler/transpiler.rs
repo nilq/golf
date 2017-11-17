@@ -63,6 +63,10 @@ impl Transpiler {
             Expression::Str(ref n)           => Ok(Rc::new(format!("\"{}\"", n))),
             Expression::Bool(ref n)          => Ok(Rc::new(format!("{}", n))),
             Expression::Char(ref n)          => Ok(Rc::new(format!("\"{}\"", n))),
+            Expression::Operand(ref op)      => match *op {
+                Operand::Add => Ok(Rc::new("__add".to_string())),
+                _ => Ok(Rc::new("".to_string())),
+            },
             Expression::Identifier(ref n, _) => {
                 match n.as_str() {
                     "while"  |
@@ -112,7 +116,42 @@ impl Transpiler {
             },
 
             Expression::Function(ref function) => {
-                let mut result = "function(...) local __args = {...}\n".to_string();
+                let mut result = "setmetatable({}, {".to_string();
+                
+                match *function.arms {
+                    Expression::Block(ref statements) => for s in statements {
+                        match *s {
+                            Statement::Expression(ref e) => match **e {
+                                Expression::Arm(ref arm) => {
+                                    if let Some(p) = arm.params.get(0) {
+                                        match **p {
+                                            Expression::Operand(ref op) => {
+                                                if let Some(other) = arm.params.get(1) {
+                                                    result.push_str(&format!("{} = function(_, {})\n", &self.lua_expression(&Expression::Operand(op.clone()))?, &self.lua_expression(&other)?));
+                                                    
+                                                    match *arm.body {
+                                                        Statement::Expression(ref e) => result.push_str(&format!("return {}\n", self.lua_expression(&e)?)),
+                                                        _                            => result.push_str(&self.lua_statement(&arm.body)?),
+                                                    }
+
+                                                    result.push_str("end,\n")
+                                                }
+                                                
+                                            },
+                                            _ => ()
+                                        }
+                                    }
+                                },
+                                _ => (),
+                            },
+                            _ => (),
+                        }
+                    },
+
+                    _ => unreachable!(),
+                }
+
+                result.push_str("__call = function(...)\nlocal __args = {...}\n");
 
                 let mut acc = 1;
 
@@ -136,29 +175,39 @@ impl Transpiler {
                     _ => unreachable!(),
                 }
 
-                result.push_str("end\n");
+                result.push_str("end,\n");
+
+                result.push_str("})");
 
                 Ok(Rc::new(result))
             },
-            
+
             Expression::Arm(ref arm) => {
-                let mut result = format!("if {} == #__args then\n", arm.params.len());
+                let mut result = format!("if {} == #__args then\n", arm.params.len() + 1);
                 
-                let mut acc = 1;
+                let mut acc = 2;
                 
                 for p in &arm.params {
                     match **p {
-                        ref c @ Expression::Identifier(_, _) => result.push_str(&format!("local {} = __args[{}]\n", self.lua_expression(&c)?, acc)),
+                        ref c @ Expression::Identifier(_, _) => {
+                            match *c {
+                                Expression::Identifier(ref id, _) if !Operand::from_str(id).is_some() => {
+                                    result.push_str(&format!("local {} = __args[{}]\n", self.lua_expression(&c)?, acc))
+                                },
+                                
+                                _ => (),
+                            }
+                        }
                         _ => (),
                     }
 
                     acc += 1
                 }
                 
-                acc = 1;
-                
+                acc = 2;
+
                 let mut flag = true;
-                
+
                 for p in &arm.params {
                     match **p {
                         ref c @ Expression::Number(_) |

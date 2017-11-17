@@ -43,7 +43,7 @@ fn transpile_path(path: &str) {
 
 fn write(path: &str, data: Rc<String>) {
     let path = Path::new(path);
-    println!("building: {}", path.display());    
+    println!("building: {}", path.display());
 
     let split_name = path.file_name().unwrap().to_str().unwrap().split(".");
     let split: Vec<&str> = split_name.collect();

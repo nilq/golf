@@ -100,7 +100,18 @@ impl Parser {
 
         let mut params = Vec::new();
 
+        let mut acc = 0;
+
         while self.traveler.current_content() != "|" {
+            if acc == 0 {
+                if self.traveler.current().token_type == TokenType::Operator {
+                    params.push(Rc::new(Expression::Operand(Operand::from_str(&self.traveler.current_content()).unwrap().0)));
+                    self.traveler.next();
+
+                    continue
+                }
+            }
+            
             let a = match self.traveler.current().token_type {
                 TokenType::IntLiteral    => {
                     let a = Expression::Number(self.traveler.current_content().parse::<f64>().unwrap());
@@ -138,10 +149,12 @@ impl Parser {
                     a
                 },
 
-                _ => continue,
+                _ => return Err(ParserError::new_pos(self.traveler.current().position, &format!("unexpected parameter: {}", self.traveler.current_content()))),
             };
 
             params.push(Rc::new(a));
+            
+            acc += 1
         }
 
         self.traveler.expect_content("|")?;

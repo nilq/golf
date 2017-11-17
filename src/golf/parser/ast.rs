@@ -15,6 +15,7 @@ pub enum Expression {
     Index(Index),
     Function(Function),
     Arm(Arm),
+    Operand(Operand),
     EOF,
 }
 

@@ -1,4 +1,5 @@
-local print=function(...) local __args = {...}
-end
-
+local print=setmetatable({}, {__call = function(...)
+local __args = {...}
+end,
+})
 print("yo world")
