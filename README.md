@@ -34,3 +34,20 @@ max = {
     }
 }
 ```
+
+overloading
+```
+vec2 = {
+  |x y| {
+    |"x"| x
+    |"y"| y
+
+    |+ v| vec2 (x + v "x"), (y + v "y")
+  }
+}
+
+a = vec2 100, 100
+b = vec2 200, 200
+
+c = a + b
+```
